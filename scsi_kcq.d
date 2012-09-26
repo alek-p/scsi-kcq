@@ -6,7 +6,7 @@
  *
  *
  *
- * 08-August-2012, ver 0.05
+ * 26-September-2012, ver 0.06
  *
  * USAGE: scsi_kcq.d [device]
  *
@@ -17,7 +17,7 @@
  * FIELDS:
  *	DEVICE			name of the device the command was issue to
  *	EXECNAME		name of the executable which issued the command that offended the disk
- *	SENSE(ERR) CATEGORY	a string representation of the mode sense key indicating type of error
+ *	<*>SENSE(ERR) CATEGORY	a string representation of the mode sense key indicating type of error. * indicates descriptor format sense data
  *	KEY			mode sense key in hex
  *	ASC			additional sense code in hex
  *	ASCQ			additional sense code qualifier in hex
@@ -388,7 +388,7 @@ fbt:sd:sd_decode_sense:entry
 	kcq_str[this->pkt] = kcq[this->sense->es_key, this->sense->es_add_code, this->sense->es_qual_code] != 0 ?
 		kcq[this->sense->es_key, this->sense->es_add_code, this->sense->es_qual_code] : "Unknown KCQ";
 
-	printf(" %-7s %-15s %-20s", dev_name[this->pkt], exec[this->pkt], sense_keys[this->sense->es_key]);
+	printf("\n %-7s %-15s  %-20s", dev_name[this->pkt], exec[this->pkt], sense_keys[this->sense->es_key]);
 	printf(" %-4.2x %-4.2x %-5.2x %-21Y", this->sense->es_key, this->sense->es_add_code, this->sense->es_qual_code, walltimestamp);
 }
 
@@ -403,7 +403,7 @@ fbt:sd:sd_decode_sense:entry
 	kcq_str[this->pkt] = kcq[this->sense_descr->ds_key, this->sense_descr->ds_add_code, this->sense_descr->ds_qual_code] != 0 ?
 		kcq[this->sense_descr->ds_key, this->sense_descr->ds_add_code, this->sense_descr->ds_qual_code] : "Unknown KCQ";
 
-	printf(" %-7s %-15s *%-20s", dev_name[this->pkt], exec[this->pkt], sense_keys[this->sense_descr->ds_key]);
+	printf("\n %-7s %-15s *%-20s", dev_name[this->pkt], exec[this->pkt], sense_keys[this->sense_descr->ds_key]);
 	printf(" %-4.2x %-4.2x %-5.2x %-21Y",	this->sense_descr->ds_key, this->sense_descr->ds_add_code, this->sense_descr->ds_qual_code, walltimestamp);
 }
 
@@ -512,14 +512,6 @@ PRINT_CDB(30)
 PRINT_CDB(31)
 PRINT_CDB(32)
 PRINT_CDB(33)
-
-
-/* need to insert a new line after CDB printing is done */
-DESTROY_PROBE 
-/this->pkt && kcq_str[this->pkt] != 0 && (dev_name[this->pkt] == $$1 || $$1 == 0)/
-{
-	printf("\n");
-}
 
 /* clean all dynamic vars */
 DESTROY_PROBE
