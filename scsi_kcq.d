@@ -342,7 +342,7 @@ dtrace:::BEGIN
 	kcq[0x0e, 0x1d,	0x0] = "Miscompare - during verify byte check operation";
 	
 	printf("Tracing... Hit Ctrl-C to end.\n\n");
-	printf(" %-7s %-15s %-20s %-4s %-4s %-5s %-21s %-30s %-16s\n", "DEVICE", "EXECNAME", "SENSE(ERR) CATEGORY", "KEY", "ASC", "ASCQ", "TIMESTAMP", "SCSI CMD", "CMD CDB");
+	printf(" %-7s %-15s  %-20s %-4s %-4s %-5s %-21s %-30s %-16s\n", "DEVICE", "EXECNAME", "SENSE(ERR) CATEGORY", "KEY", "ASC", "ASCQ", "TIMESTAMP", "SCSI CMD", "CMD CDB");
 }
 
 /*save devname and execname to thread local var since later on they will not be easy to get*/
