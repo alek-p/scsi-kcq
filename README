@@ -1,0 +1,24 @@
+scsi_kcq.d - A script to print scsi sense data (errors) as it's received, with useful
+           details such as execname issuing the failing command, what the command is,
+           which device the command reached, what the KCQ is and the failed commands CDB.
+           Written using DTrace (NexentaOS_134f)
+
+ USAGE: scsi_kcq.d [device]
+	scsi_kcq.d	   * print default output - live errors on all drives plus aggregation of errors at the end
+	scsi_kcq.d sd2     * print default output only for disk sd2
+
+
+ FIELDS:
+	DEVICE			name of the device the command was issue to
+	EXECNAME		name of the executable which issued the command that offended the disk
+	<*>SENSE(ERR) CATEGORY	a string representation of the mode sense key indicating type of error. * indicates descriptor format sense data
+	KEY			mode sense key in hex
+	ASC			additional sense code in hex
+	ASCQ			additional sense code qualifier in hex
+	TIMESTAMP		wallclock time when the sd_decode_sense:entry probe fired
+	SCSI CMD		a string indicating what the offending  scsi command was
+	CMD CDB			SCSI CDB for the command that generated the KCQ
+	KCQ STRING		the translation of the key, asc, and ascq (KCQ) sense data fields
+	COUNT			number of times the above fields were identical (aggregation on the above fields without CDB)
+
+NOTE: this script does not track "Predictive Failure Analysis threshold reached" KCQ.
