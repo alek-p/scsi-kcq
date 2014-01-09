@@ -1,19 +1,19 @@
 #!/usr/sbin/dtrace -qCs
 /* scsi_kcq.d - A script to print scsi sense data (errors) as it's received, with useful
  *           details such as execname issuing the failing command, what the command is,
- *           which device the command reached, what the KCQ is and the failed commands CDB. 
+ *           which device the command reached, what the KCQ is and the failed commands CDB.
  *           Written using DTrace (NexentaOS_134f)
  *
  *
  *
- * 26-September-2012, ver 0.06
+ * 09-January-2014, ver 0.06
  *
  * USAGE: scsi_kcq.d [device]
  *
  *	scsi_kcq.d	   * print default output - live errors on all drives plus aggregation of errors at the end
  *	scsi_kcq.d sd2     * print default output only for disk sd2
  *
- * 	
+ *
  * FIELDS:
  *	DEVICE			name of the device the command was issue to
  *	EXECNAME		name of the executable which issued the command that offended the disk
@@ -60,7 +60,7 @@
 /* increase the below variables if you're getting 'dynamic variable drops' under high load*/
 #pragma D option dynvarsize=16m
 #pragma D option cleanrate=303hz
-	
+
 dtrace:::BEGIN
 {
 	/*translation arrays*/
@@ -198,7 +198,7 @@ dtrace:::BEGIN
 	sense_keys[0x0d] = "Volume Overflow";
 	sense_keys[0x0e] = "Other";
 	sense_keys[0x0f] = "Reserved";
-	
+
 	kcq[0x01, 0x01,	0x0] = "Soft Error - Recovered Write error - no index";
 	kcq[0x01, 0x02,	0x0] = "Soft Error - Recovered no seek completion";
 	kcq[0x01, 0x03, 0x0] = "Soft Error - Recovered Write error - write fault";
@@ -288,7 +288,7 @@ dtrace:::BEGIN
 	kcq[0x05, 0x1a, 0x0] = "Illegal Request - parm list length error";
 	kcq[0x05, 0x20, 0x0] = "Illegal Request - invalid/unsupported command code";
 	kcq[0x05, 0x21, 0x0] = "Illegal Request - LBA out of range";
-	kcq[0x05, 0x24, 0x0] = "Illegal Request - invalid field in CDB";
+	kcq[0x05, 0x24, 0x0] = "Illegal Request - invalid field in CDB";
 	kcq[0x05, 0x25, 0x0] = "Illegal Request - invalid LUN";
 	kcq[0x05, 0x26, 0x0] = "Illegal Request - invalid fields in parm list";
 	kcq[0x05, 0x26, 0x01] = "Illegal Request - parameter not supported";
@@ -340,7 +340,7 @@ dtrace:::BEGIN
 	kcq[0x0b, 0x4e, 0x0] = "Aborted Command - overlapped commands attempted";
 	kcq[0x0b, 0x4f, 0x0] = "Aborted Command - due to loop initialisation";
 	kcq[0x0e, 0x1d,	0x0] = "Miscompare - during verify byte check operation";
-	
+
 	printf("Tracing... Hit Ctrl-C to end.\n\n");
 	printf(" %-7s %-15s  %-20s %-4s %-4s %-5s %-21s %-30s %-16s\n", "DEVICE", "EXECNAME", "SENSE(ERR) CATEGORY", "KEY", "ASC", "ASCQ", "TIMESTAMP", "SCSI CMD", "CMD CDB");
 }
@@ -350,7 +350,7 @@ fbt:scsi:scsi_init_pkt:entry
 /args[2] != 0/
 {
 	self->exec_name = execname;
-	self->dev_name =  xlate <devinfo_t *>(args[2])->dev_name != "nfs" ? 
+	self->dev_name =  xlate <devinfo_t *>(args[2])->dev_name != "nfs" ?
 		xlate <devinfo_t *>(args[2])->dev_statname : "nfs";
 	self->dev_name = self->dev_name !=  0 ? self->dev_name : "???";
 }
@@ -379,7 +379,7 @@ fbt:scsi:scsi_init_pkt:return
 
 /* fires when fixed format sense data is seen */
 fbt:sd:sd_decode_sense:entry
-/(this->xp = (struct sd_xbuf *) arg2) && (!SCSI_IS_DESCR_SENSE((uint8_t *) this->xp->xb_sense_data)) && 
+/(this->xp = (struct sd_xbuf *) arg2) && (!SCSI_IS_DESCR_SENSE((uint8_t *) this->xp->xb_sense_data)) &&
 	(this->sense = (struct scsi_extended_sense *) this->xp->xb_sense_data) && this->sense->es_key &&
 	(dev_name[(struct scsi_pkt *)arg3] == $$1 || $$1 == 0) /
 {
@@ -394,12 +394,12 @@ fbt:sd:sd_decode_sense:entry
 
 /* fires when descriptor format sense data is seen */
 fbt:sd:sd_decode_sense:entry
-/(this->xp = (struct sd_xbuf *) arg2) && (SCSI_IS_DESCR_SENSE((uint8_t *) this->xp->xb_sense_data)) && 
+/(this->xp = (struct sd_xbuf *) arg2) && (SCSI_IS_DESCR_SENSE((uint8_t *) this->xp->xb_sense_data)) &&
 	(this->sense_descr = (struct scsi_descr_sense_hdr *) this->xp->xb_sense_data) && this->sense_descr->ds_key &&
 	(dev_name[(struct scsi_pkt *)arg3] == $$1 || $$1 == 0)/
 {
 	this->pkt = (struct scsi_pkt *)arg3;
-	
+
 	kcq_str[this->pkt] = kcq[this->sense_descr->ds_key, this->sense_descr->ds_add_code, this->sense_descr->ds_qual_code] != 0 ?
 		kcq[this->sense_descr->ds_key, this->sense_descr->ds_add_code, this->sense_descr->ds_qual_code] : "Unknown KCQ";
 
@@ -464,7 +464,7 @@ DESTROY_PROBE
 DESTROY_PROBE
 /this->pkt && kcq_str[this->pkt] != 0 && (dev_name[this->pkt] == $$1 || $$1 == 0)/
 {
-	this->cmd = (scsi_ops[(uint_t)this->cdb[0], this->sa] == 0) ? 
+	this->cmd = (scsi_ops[(uint_t)this->cdb[0], this->sa] == 0) ?
 		strjoin("Unknown CMD ", lltostr((uint_t)this->cdb[0])) : scsi_ops[(uint_t)this->cdb[0], this->sa];
 	printf(" %-30s ",this->cmd);
 
@@ -515,7 +515,7 @@ PRINT_CDB(33)
 
 /* clean all dynamic vars */
 DESTROY_PROBE
-/this->pkt/ 
+/this->pkt/
 {
 	kcq_str[this->pkt] = 0;
 	dev_name[this->pkt] = 0;
@@ -524,7 +524,7 @@ DESTROY_PROBE
 
 /* clean all dynamic vars */
 DESTROY_PROBE
-/self->pkt/ 
+/self->pkt/
 {
 	kcq_str[self->pkt] = 0;
 	dev_name[self->pkt] = 0;
