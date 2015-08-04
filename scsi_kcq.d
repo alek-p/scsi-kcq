@@ -329,6 +329,7 @@ dtrace:::BEGIN
 	kcq[0x0b, 0x47, 0x0] = "Aborted Command - SCSI parity error";
 	kcq[0x0b, 0x48, 0x0] = "Aborted Command - initiator-detected error message received";
 	kcq[0x0b, 0x49, 0x0] = "Aborted Command - inappropriate/illegal message";
+	kcq[0x0b, 0x55, 0x3] = "Aborted Command - insufficient resources";
 	kcq[0x0b, 0x4b, 0x0] = "Aborted Command - data phase error";
 	kcq[0x0b, 0x4e, 0x0] = "Aborted Command - overlapped commands attempted";
 	kcq[0x0b, 0x4f, 0x0] = "Aborted Command - due to loop initialisation";
